@@ -36,5 +36,5 @@ match_config = dict(
 )
 
 # checkpoint from stage2 (but now in geosplit work_dir)
-work_dir = '/ssd1/shenzhen/maptracker/work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune'
-load_from = '/ssd1/shenzhen/maptracker/work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage2_warmup/latest.pth'
+work_dir = 'work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune'
+load_from = 'work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage2_warmup/latest.pth'
