@@ -21,3 +21,6 @@ CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash ./tools/dist_train.sh plugin/configs/map
 
 # Stage 3: Joint finetuning:
 CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py 7
+
+# Evaluation
+CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 7 --eval --eval-options save_semantic=True
