@@ -117,6 +117,21 @@ class AV2Dataset(BaseMapDataset):
         """
 
         sample = self.samples[idx]
+
+        # print(f"[argo_dataset.py] sample keys: {sample.keys()}")
+
+        location = sample['location']
+
+        # NOTE: different from nuscenes (no need to use Quaternion)
+        # Ref: https://github.com/HXMap/HRMapNet/blob/197f3407e130ced435db40bff91954286d480ce2/projects/mmdet3d_plugin/datasets/av2_offlinemap_dataset.py#L1025
+        lidar2global = np.eye(4)
+        lidar2global[:3, 3] = sample['e2g_translation']
+        lidar2global[:3, :3] = sample['e2g_rotation']
+
+        # ================ pre-save lidar2global before shift
+        lidar2global_real = lidar2global
+
+
         log_id = sample['log_id']
         map_geoms = self.map_extractor.get_map_geom(log_id, sample['e2g_translation'], 
                 sample['e2g_rotation'])
@@ -140,6 +155,8 @@ class AV2Dataset(BaseMapDataset):
         # pdb.set_trace()
 
         input_dict = {
+            'location': location,
+            'lidar2global_real': lidar2global_real,
             'token': sample['token'],
             'img_filenames': [c['img_fpath'] for c in sample['cams'].values()],
             # intrinsics are 3x3 Ks

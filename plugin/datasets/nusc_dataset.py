@@ -79,6 +79,10 @@ class NuscDataset(BaseMapDataset):
         ego2global[:3,:3] = Quaternion(sample['e2g_rotation']).rotation_matrix
         ego2global[:3, 3] = sample['e2g_translation']
 
+        # ================ pre-save lidar2global before shift
+        lidar2global_real = ego2global @ lidar2ego
+
+
         # NOTE: The original StreamMapNet uses the ego location to query the map,
         # to align with the lidar-centered setting in MapTR, we made some modifiactions 
         # here to switch to the lidar-center setting
@@ -132,6 +136,7 @@ class NuscDataset(BaseMapDataset):
 
         input_dict = {
             'location': location,
+            'lidar2global_real': lidar2global_real,
             'token': sample['token'],
             'img_filenames': [c['img_fpath'] for c in sample['cams'].values()],
             # intrinsics are 3x3 Ks

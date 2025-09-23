@@ -11,6 +11,8 @@ from .bevformer.grid_mask import GridMask
 from mmdet3d.models import builder
 from contextlib import nullcontext
 
+from mmcv.cnn import xavier_init
+
 
 class UpsampleBlock(nn.Module):
     def __init__(self, ins, outs):
@@ -109,6 +111,25 @@ class BEVFormerBackbone(nn.Module):
         self.bev_embedding = nn.Embedding(
             self.bev_h * self.bev_w, self.embed_dims)
 
+        # NEW: Local map CNN
+        self.local_map_cnn = nn.Sequential(
+            nn.Conv2d(3, self.embed_dims, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(self.embed_dims, self.embed_dims, kernel_size=3, padding=1),
+            nn.ReLU(),
+        )
+
+        # NEW: Fusion conv (map + BEV features)
+        self.map_feats_conv = nn.Sequential(
+            nn.Conv2d(self.embed_dims * 2, self.embed_dims, 3, padding=1, bias=False),
+            nn.BatchNorm2d(self.embed_dims),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(self.embed_dims, self.embed_dims, 3, padding=1, bias=False),
+            nn.BatchNorm2d(self.embed_dims),
+            nn.ReLU(inplace=True),
+        )
+
 
     def init_weights(self):
         """Initialize weights of the DeformDETR head."""
@@ -118,7 +139,10 @@ class BEVFormerBackbone(nn.Module):
        
         if self.upsample:
             self.up.init_weights()
-    
+
+        xavier_init(self.map_feats_conv, distribution='uniform', bias=0.)
+        xavier_init(self.local_map_cnn, distribution='uniform', bias=0.)
+            
     # @auto_fp16(apply_to=('img'))
     def extract_img_feat(self, img, img_metas, len_queue=None):
         """Extract features of images."""
@@ -157,7 +181,9 @@ class BEVFormerBackbone(nn.Module):
         return img_feats_reshaped
 
     def forward(self, img, img_metas, timestep, history_bev_feats, history_img_metas, all_history_coord, *args, prev_bev=None, 
-                img_backbone_gradient=True, **kwargs):
+                img_backbone_gradient=True, 
+                local_map=None, 
+                **kwargs):
         """Forward function.
         Args:
             mlvl_feats (tuple[Tensor]): Features from the upstream
@@ -222,9 +248,27 @@ class BEVFormerBackbone(nn.Module):
                 img_metas=img_metas,
                 prev_bev=prev_bev,
                 warped_history_bev=all_warped_history_feat,
-            )
+            ) # [B, HxW, C] [1, 5000, 256]
         
-        outs = outs.unflatten(1,(self.bev_h,self.bev_w)).permute(0,3,1,2).contiguous()
+        outs = outs.unflatten(1,(self.bev_h,self.bev_w)).permute(0,3,1,2).contiguous() # [B, C, H, W] [1, 256, 50, 100]
+
+        # Step 0: verify local_map is provided
+        if local_map is not None:
+
+            # print("[bevformer_backbone.py] local_map shape:", local_map.shape) # [H*W, B, C]
+
+            # Step 1: reshape local_map to [B, K, H, W]
+            local_map_reshaped = local_map.permute(1, 0, 2).view(bs, self.bev_h, self.bev_w, -1).permute(0, 3, 1, 2).contiguous()
+
+            # Step 2: apply local_map CNN → [B, C, H, W]
+            local_map_feat = self.local_map_cnn(local_map_reshaped)
+
+            # Step 4: fuse map + image features → [B, 2C, H, W]
+            bev_fuse = torch.cat([outs, local_map_feat], dim=1)
+
+            # Step 5: apply final CNN → [B, C, H, W]
+            outs = self.map_feats_conv(bev_fuse)
+
         
         if self.upsample:
             outs = self.up(outs)

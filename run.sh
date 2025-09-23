@@ -11,16 +11,37 @@ python tools/data_converter/argoverse_converter.py --data-root ./datasets/argove
 # Step3: Generate the tracking ground truth by
 python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/argoverse2_geosplit --visualize
 
+# NOTE: all using debug for now. once exps finish, need to change all of these
+# NOTE: use single gpu for quick debug now. 
+ 
+# TODO: if train with 7 GPUs, need to change num_gpus in all configs. otherwise, we train with 7/8 total iters!!!
 
 # Training
 # Stage 1: BEV pretraining with semantic segmentation losses:
-CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage1_bev_pretrain.py 7
+CUDA_VISIBLE_DEVICES=1 \
+    bash ./tools/dist_train.sh \
+    plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage1_bev_pretrain.py \
+    1 \
+    --work-dir work_dirs/debug_stage1_bev_pretrain
 
+# TODO: check this result before move on to stage 3! 
 # Stage 2: Vector module warmup with a large batch size while freezing the BEV module:
-CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage2_warmup.py 7
+CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 \
+    bash ./tools/dist_train.sh \
+    plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage2_warmup.py \
+    7 \
+    --work-dir work_dirs/debug_stage2_warmup
 
 # Stage 3: Joint finetuning:
-CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py 7
+CUDA_VISIBLE_DEVICES=1 \
+    bash ./tools/dist_train.sh \
+    plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py \
+    1 \
+    --work-dir work_dirs/debug_stage3_joint_finetune
 
 # Evaluation
-CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 7 --eval --eval-options save_semantic=True
+CUDA_VISIBLE_DEVICES=1,2,3,4,5,6,7 \
+    bash tools/dist_test.sh \
+    plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py \
+    work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth \
+    7 --eval --eval-options save_semantic=True

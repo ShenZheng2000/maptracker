@@ -1,3 +1,4 @@
+# NOTE: let's use local_map for backbone (prev_frames + curr_frame), but for upload (only curr_frame)
 """
     MapTracker main module, adapted from StreamMapNet
 """
@@ -16,6 +17,26 @@ from einops import rearrange, repeat
 from scipy.spatial.transform import Rotation as R
 
 from .vector_memory import VectorInstanceMemory
+from .global_map import GlobalMap
+
+# ================ hardcode global_map_cfg here for now
+global_map_cfg = dict(
+
+    # NOTE: hardcode match with maptracker config settings
+    pc_range=[-30, -15, -3, 30, 15, 5],
+    bev_h=50,
+    bev_w=100,
+
+    # TODO: hardcode for now, move to config later. 
+    pose_root='./datasets/argoverse2_geosplit',
+
+    fuse_method='prob',  # all or prob
+    raster_size=[0.30, 0.30],
+    dataset='av2',
+    load_map_path=None,
+    save_map_path=None,
+    update_map=True,
+)
 
 
 @MAPPERS.register_module()
@@ -107,6 +128,59 @@ class MapTracker(BaseMapper):
         self.register_buffer('plane', plane.double())
         
         self.init_weights(pretrained)
+
+        # ================ HRMapNet lines
+        if global_map_cfg is not None:
+            self.global_map = GlobalMap(global_map_cfg)
+            self.update_map = global_map_cfg['update_map']
+        else:
+            self.global_map = None
+            self.update_map = False
+        self.epoch = -1
+
+
+    # ================ HRMapNet functions
+    def set_epoch(self, epoch):
+        self.epoch = epoch
+
+    def update_global_map(self, img_metas, raster, status):
+        bs = raster.shape[0]
+        for i in range(bs):
+            metas = img_metas[i]
+            city_name = metas['location']
+            trans = metas['lidar2global_real']
+            self.global_map.update_map(city_name, trans, raster[i], status)
+
+    def obtain_global_map(self, img_metas, status):
+        bs = len(img_metas)
+        bev_maps = []
+        for i in range(bs):
+            metas = img_metas[i]
+            city_name = metas['location']
+            trans = metas['lidar2global_real']
+            local_map = self.global_map.get_map(city_name, trans, status)
+            bev_maps.append(local_map)
+        bev_maps = torch.stack(bev_maps)
+        bev_maps = bev_maps.permute(1, 0, 2)
+        return bev_maps
+
+    # NOTE: not used for now 
+    # def return_map(self):
+    #     if self.update_map:
+    #         self.global_map.save_global_map()
+    #     # return self.global_map.get_global_map()
+    
+
+    # ================ My functions
+    def get_local_map(self, img_metas, device, status='train'):
+        """Fetch local map from the global map if available, else return None."""
+        if self.global_map is not None:
+            self.global_map.check_map(device, self.epoch, status)
+            return self.obtain_global_map(img_metas, status)
+        else:
+            return None
+
+
 
     def init_weights(self, pretrained=None):
         """Initialize model weights."""
@@ -411,9 +485,14 @@ class MapTracker(BaseMapper):
             all_history_curr2prev, all_history_prev2curr, all_history_coord =  \
                     self.process_history_info(all_img_metas_prev[t], history_img_metas)
 
+            # ================ define local_map
+            local_map = self.get_local_map(all_img_metas_prev[t], all_img_prev[t][0].device, status='train')
+            # local_map = None # TODO: THINK! should we use local_map for all prev frames?
+
             _bev_feats, mlvl_feats = self.backbone(all_img_prev[t], all_img_metas_prev[t], t, history_bev_feats, 
                         history_img_metas, all_history_coord, points=None, 
-                        img_backbone_gradient=img_backbone_gradient)
+                        img_backbone_gradient=img_backbone_gradient,
+                        local_map=local_map)
 
             # Neck for prev
             bev_feats = self.neck(_bev_feats)
@@ -507,8 +586,12 @@ class MapTracker(BaseMapper):
 
         all_history_curr2prev, all_history_prev2curr, all_history_coord = self.process_history_info(img_metas, history_img_metas)
 
+        # ================ define local_map
+        local_map = self.get_local_map(img_metas, img[0].device, status='train')
+
         _bev_feats, mlvl_feats = self.backbone(img, img_metas, num_prev_frames, history_bev_feats, history_img_metas, all_history_coord,
-                    points=None, img_backbone_gradient=img_backbone_gradient)
+                    points=None, img_backbone_gradient=img_backbone_gradient, 
+                    local_map=local_map)
         # Neck for curr
         bev_feats = self.neck(_bev_feats)
 
@@ -545,6 +628,14 @@ class MapTracker(BaseMapper):
                 track_query_info=track_query_info,
                 memory_bank=memory_bank,
                 return_loss=True)
+            
+            # ================== Update global map (HRMapNet style)
+            if self.update_map:
+                outs = preds_list[-1]
+
+                new_map = self.head.get_pred_mask(outs)
+                self.update_global_map(img_metas, new_map, 'train')
+
         else:
             loss_dict = {}
         
@@ -617,8 +708,12 @@ class MapTracker(BaseMapper):
         all_history_curr2prev, all_history_prev2curr, all_history_coord =  \
                     self.process_history_info(img_metas, history_img_metas)
 
+        # ================ define local_map
+        local_map = self.get_local_map(img_metas, img[0].device, status='val')
+
         _bev_feats, mlvl_feats = self.backbone(img, img_metas, local_idx, history_bev_feats, history_img_metas,
-                        all_history_coord, points=points)
+                        all_history_coord, points=points,
+                        local_map=local_map)
         
         img_shape = [_bev_feats.shape[2:] for i in range(_bev_feats.shape[0])]
         # Neck
@@ -649,6 +744,12 @@ class MapTracker(BaseMapper):
         if not self.skip_vector_head:
             # take predictions from the last layer
             preds_dict = preds_list[-1]
+
+            # ================== Update global map (HRMapNet style)
+            if self.update_map:
+                new_map = self.head.get_pred_mask(preds_dict)
+                self.update_global_map(img_metas, new_map, 'val')
+
         else:
             preds_dict = None
 

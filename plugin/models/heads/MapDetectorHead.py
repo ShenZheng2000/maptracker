@@ -14,6 +14,8 @@ from mmdet.models.utils.transformer import inverse_sigmoid
 
 from einops import rearrange
 
+from .nms_free_coder import MapTRNMSFreeCoder
+
 @HEADS.register_module(force=True)
 class MapDetectorHead(nn.Module):
 
@@ -35,9 +37,28 @@ class MapDetectorHead(nn.Module):
                  transformer=dict(),
                  loss_cls=dict(),
                  loss_reg=dict(),
-                 assigner=dict()
+                 assigner=dict(),
                 ):
         super().__init__()
+
+        # ================ Hardcode bbox coder (re-use num_classes from input args)
+        self.bbox_coder = MapTRNMSFreeCoder(
+
+            # NOTE: hardcode match with maptracker config settings
+            pc_range=[-30, -15, -3, 30, 15, 5],
+            bev_h=50,
+            bev_w=100,
+            voxel_size=[0.6, 0.6, 8.0],
+
+            z_cfg=dict(
+                pred_z_flag=False,
+                gt_z_flag=False,
+            ),
+            post_center_range=[-35, -20, -35, -20, 35, 20, 35, 20],
+            max_num=50,
+            num_classes=num_classes,
+        )
+
         self.num_queries = num_queries
         self.num_classes = num_classes
         self.in_channels = in_channels
@@ -832,3 +853,64 @@ class MapDetectorHead(nn.Module):
             return self.forward_train(*args, **kwargs)
         else:
             return self.forward_test(*args, **kwargs)
+        
+    # ================ Inference Helper Functions
+    @force_fp32(apply_to=('preds_dicts'))
+    def get_pred_mask(self, preds_dicts):
+        """Generate bboxes from bbox head predictions.
+        Args:
+            preds_dicts (tuple[list[dict]]): Prediction results.
+            img_metas (list[dict]): Point cloud and image's meta info.
+        Returns:
+            list[dict]: Decoded bbox, scores and labels after nms.
+        """
+        with torch.no_grad():
+
+            # If this is MapTracker-style (scores/lines), adapt to HRMapNet-style
+            if isinstance(preds_dicts, dict) and 'scores' in preds_dicts and 'lines' in preds_dicts:
+                preds_dicts = self._as_hrmapnet_preds(preds_dicts)
+
+            raster_lists = self.bbox_coder.decode_raster(preds_dicts)
+            raster_tensor = torch.stack(raster_lists, dim=0)
+            # bs, n, bev_h, bev_w = raster_tensor.shape
+            raster_tensor = raster_tensor.permute(0, 2, 3, 1)
+            return raster_tensor
+        
+    def _as_hrmapnet_preds(self, outs):
+        """
+        Convert MapTracker-style outs (dict with per-batch lists: 'scores', 'lines')
+        into HRMapNet-style preds_dicts (lists over decoder layers).
+        Produces real (cx, cy, w, h) bboxes from points (no zeros).
+        """
+
+        # outs['scores']: list of [N, C] per batch element
+        # outs['lines'] : list of [N, 2*P] per batch element
+        bs = len(outs['scores'])
+        scores = torch.stack(outs['scores'], dim=0)          # [B, N, C]
+        lines  = torch.stack(outs['lines'],  dim=0)          # [B, N, 2P]
+        N, twoP = lines.shape[1], lines.shape[2]
+        P = twoP // 2
+
+        # [B, N, P, 2] in normalized [0,1] BEV coords
+        pts = lines.view(bs, N, P, 2)
+
+        # derive bbox (cx, cy, w, h) from points (still normalized)
+        x = pts[..., 0]                                      # [B, N, P]
+        y = pts[..., 1]
+        x_min, _ = x.min(dim=2)
+        x_max, _ = x.max(dim=2)
+        y_min, _ = y.min(dim=2)
+        y_max, _ = y.max(dim=2)
+        cx = (x_min + x_max) * 0.5
+        cy = (y_min + y_max) * 0.5
+        w  = (x_max - x_min).clamp_min(1e-6)
+        h  = (y_max - y_min).clamp_min(1e-6)
+        bbox = torch.stack([cx, cy, w, h], dim=-1)           # [B, N, 4]
+
+        # Pack exactly what decode_raster expects:
+        # take "last layer" only (we only have one here)
+        return {
+            "all_cls_scores": [scores],   # [B, N, C]
+            "all_bbox_preds": [bbox],     # [B, N, 4]
+            "all_pts_preds":  [pts],      # [B, N, P, 2]
+        }

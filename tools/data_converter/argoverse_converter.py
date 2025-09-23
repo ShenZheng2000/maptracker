@@ -168,6 +168,10 @@ def get_data_from_logid(log_id, loaders, data_root):
         city_SE3_ego = loader.get_city_SE3_ego(log_id, int(ts))
         e2g_translation = city_SE3_ego.translation
         e2g_rotation = city_SE3_ego.rotation
+
+        # ================ get location
+        # Ref: https://github.com/HXMap/HRMapNet/blob/197f340/tools/maptrv2/custom_av2_map_converter.py#L204
+        location = loader.get_city_name(log_id)
         
         samples.append(dict(
             e2g_translation=e2g_translation,
@@ -176,6 +180,7 @@ def get_data_from_logid(log_id, loaders, data_root):
             lidar_fpath=str(lidar_fpath),
             prev=prev,
             # map_fpath=map_fname,
+            location=location,
             token=str(ts),
             log_id=log_id,
             scene_name=log_id))

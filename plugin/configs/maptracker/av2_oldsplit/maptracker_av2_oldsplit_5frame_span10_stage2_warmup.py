@@ -306,7 +306,9 @@ train_pipeline = [
     dict(type='FormatBundleMap'),
     dict(type='Collect3D', keys=['img', 'vectors', 'semantic_mask', 'pv_mask'], meta_keys=(
         'token', 'ego2img', 'sample_idx', 'ego2global_translation',
-        'ego2global_rotation', 'img_shape', 'scene_name'))
+        'ego2global_rotation', 'img_shape', 'scene_name',
+        'location', 'lidar2global_real',
+        ))
 ]
 
 # data processing pipelines
@@ -321,7 +323,8 @@ test_pipeline = [
     dict(type='FormatBundleMap'),
     dict(type='Collect3D', keys=['img',], meta_keys=(
         'token', 'ego2img', 'sample_idx', 'ego2global_translation',
-        'ego2global_rotation', 'img_shape', 'scene_name'))
+        'ego2global_rotation', 'img_shape', 'scene_name',
+        'location', 'lidar2global_real',))
 ]
 
 # configs for evaluation code
