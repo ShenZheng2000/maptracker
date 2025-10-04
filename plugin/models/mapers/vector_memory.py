@@ -5,7 +5,6 @@ from einops import repeat, rearrange
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
-
 def get_emb(sin_inp):
     """
     Gets a base embedding for one dimension with sin and cos intertwined
@@ -53,9 +52,17 @@ class PositionalEncoding1D(nn.Module):
 class VectorInstanceMemory(nn.Module):
 
     def __init__(self,
-                 dim_in, number_ins, bank_size, mem_len, mem_select_dist_ranges
+                 dim_in, number_ins, bank_size, mem_len, mem_select_dist_ranges,
+                 add_pose_noise=True,
+                 add_test_pose_noise=False,
+                 noise_fn=None,
                  ):
         super().__init__()
+
+        self.add_pose_noise = add_pose_noise
+        self.add_test_pose_noise = add_test_pose_noise
+        self.noise_fn = noise_fn
+
         self.max_number_ins = 3 * number_ins # make sure this is not exceeded at initial training when results could be quite random
         self.bank_size = bank_size
         self.mem_len = mem_len
@@ -243,8 +250,10 @@ class VectorInstanceMemory(nn.Module):
         rot = R.from_matrix(rot_mat)
         translation = pose_matrix[..., 3] 
 
-        if self.training:
-            rot, translation = self.add_noise_to_pose(rot, translation)
+        if (self.training and self.add_pose_noise) or (not self.training and self.add_test_pose_noise):
+
+            # rot, translation = self.add_noise_to_pose(rot, translation)
+            rot, translation = self.noise_fn(rot, translation)
 
         rot_quat = torch.tensor(rot.as_quat()).float().to(pose_matrix.device)
         pose_info = torch.cat([rot_quat, translation], dim=1)
@@ -267,20 +276,6 @@ class VectorInstanceMemory(nn.Module):
         self.batch_mem_relative_pe_dict[b_i] = relative_seq_pe
         self.batch_key_padding_dict[b_i] = key_padding_mask
     
-    def add_noise_to_pose(self, rot, trans):
-        rot_euler = rot.as_euler('zxy')
-        # 0.08 mean is around 5-degree, 3-sigma is 15-degree
-        noise_euler = np.random.randn(*list(rot_euler.shape)) * 0.08
-        rot_euler += noise_euler
-        noisy_rot = R.from_euler('zxy', rot_euler)
-
-        # error within 0.25 meter
-        noise_trans = torch.randn_like(trans) * 0.25
-        noise_trans[:, 2] = 0
-        noisy_trans = trans + noise_trans
-
-        return noisy_rot, noisy_trans
-
     def select_memory_entries(self, mem_trans, curr_meta):
         history_e2g_trans = mem_trans[:, :2].cpu().numpy()
         curr_e2g_trans = np.array(curr_meta['ego2global_translation'][:2])

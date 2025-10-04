@@ -16,7 +16,7 @@ from einops import rearrange, repeat
 from scipy.spatial.transform import Rotation as R
 
 from .vector_memory import VectorInstanceMemory
-
+from .utils import add_noise_to_pose
 
 @MAPPERS.register_module()
 class MapTracker(BaseMapper):
@@ -41,8 +41,16 @@ class MapTracker(BaseMapper):
                  use_memory=False,
                  mem_len=None,
                  mem_warmup_iters=-1,
+                 add_pose_noise=True,
+                 add_test_pose_noise=False,
+                 rot_std=0.08,
+                 trans_std=0.25,
                  **kwargs):
         super().__init__()
+
+        self.add_pose_noise = add_pose_noise
+        self.add_test_pose_noise = add_test_pose_noise
+        self.noise_fn = lambda r, t: add_noise_to_pose(r, t, rot_std, trans_std)
 
         #Attribute
         self.model_name = model_name
@@ -94,6 +102,9 @@ class MapTracker(BaseMapper):
                 bank_size=mem_len,
                 mem_len=mem_len,
                 mem_select_dist_ranges=self.mem_select_dist_ranges,
+                add_pose_noise=self.add_pose_noise,
+                add_test_pose_noise=self.add_test_pose_noise,
+                noise_fn=self.noise_fn,
             )
 
         xmin, xmax = -roi_size[0]/2, roi_size[0]/2
@@ -182,8 +193,12 @@ class MapTracker(BaseMapper):
                 trans_matrix = history_prev2curr_matrix[-1].clone()
 
                 # Add training-time perturbation here for the transformation matrix
-                if self.training:
-                    rot, translation = self.add_noise_to_pose(rot, translation)            
+                # print("[MapTracker.py] self.add_pose_noise:", self.add_pose_noise)
+                if (self.training and self.add_pose_noise) or (not self.training and self.add_test_pose_noise):
+
+                    # rot, translation = self.add_noise_to_pose(rot, translation)
+                    rot, translation = self.noise_fn(rot, translation)
+
                     trans_matrix[:3, :3] = torch.tensor(rot.as_matrix()).to(trans_matrix.device)
                     trans_matrix[:3, 3] = torch.tensor(translation).to(trans_matrix.device)
 
@@ -277,19 +292,6 @@ class MapTracker(BaseMapper):
             }
             return trans_loss_dict
     
-    def add_noise_to_pose(self, rot, trans):
-        rot_euler = rot.as_euler('zxy')
-        # 0.08 mean is around 5-degree, 3-sigma is 15-degree
-        noise_euler = np.random.randn(*list(rot_euler.shape)) * 0.08
-        rot_euler += noise_euler
-        noisy_rot = R.from_euler('zxy', rot_euler)
-
-        # error within 0.25 meter
-        noise_trans = torch.randn_like(trans) * 0.25
-        noise_trans[2] = 0
-        noisy_trans = trans + noise_trans
-
-        return noisy_rot, noisy_trans
 
     def process_history_info(self, img_metas, history_img_metas):
         bs = len(img_metas)
