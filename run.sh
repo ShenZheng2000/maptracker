@@ -33,16 +33,22 @@
 # bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # bash tools/dist_test.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
+# V2
+# # Stage 2 (NO pose noise for MapTracker or vector_memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v2.py 8
 
-# Stage 2 (NO pose noise for MapTracker or vector_memory)
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v2.py 8
+# # Stage 3 (NO pose noise for MapTracker or vector_memory) => resume from interrupted training
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v2.py 8
 
-# Stage 3 (NO pose noise for MapTracker or vector_memory) => resume from interrupted training
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v2.py 8
+# # Stage 3 (NO **TEST** pose noise for MapTracker or vector_memory)
+# PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r008_t025.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+# PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r016_t050.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+# PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r032_t100.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
-# Stage 3 (NO **TEST** pose noise for MapTracker or vector_memory)
-PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r008_t025.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
-PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r016_t050.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
-PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r032_t100.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
-# TODO: use_memory=False in stage 2 & 3 to disable vector memory module
+# V3
+# Stage 2 (No use_memory for vector)
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v3.py 8
+
+# Stage 3 (No use_memory for vector)
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v3.py 8
