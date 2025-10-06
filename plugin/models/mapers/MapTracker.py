@@ -169,7 +169,13 @@ class MapTracker(BaseMapper):
                     self.memory_bank.trans_memory_bank(self.query_propagate, b_i, img_metas[b_i])
 
             # transform the track queries
-            if track_query_info is not None:
+            # (2025-10-05) Added check for empty history
+            # if track_query_info is not None:
+            if (
+                track_query_info is not None
+                and len(all_history_curr2prev) > 0
+                and len(all_history_prev2curr) > 0
+            ):
                 history_curr2prev_matrix = all_history_curr2prev[b_i]
                 history_prev2curr_matrix = all_history_prev2curr[b_i]
 

@@ -203,7 +203,13 @@ class MapDetectorHead(nn.Module):
         assert list(query_embedding.shape) == [bs, self.num_queries, self.embed_dims]
 
         # Prepare the propagated track queries, concat with the original dummy queries
-        if track_query_info is not None and 'track_query_hs_embeds' in track_query_info[0]:
+        # (2025-10-05) Added check for trans_track_query_boxes
+        # if track_query_info is not None and 'track_query_hs_embeds' in track_query_info[0]:
+        if (
+            track_query_info is not None and
+            'track_query_hs_embeds' in track_query_info[0] and
+            'trans_track_query_boxes' in track_query_info[0]
+        ):
             new_query_embeds = []
             new_init_ref_pts = []
             for b_i in range(bs):
@@ -306,7 +312,13 @@ class MapDetectorHead(nn.Module):
         assert list(query_embedding.shape) == [bs, input_query_num, self.embed_dims]
 
         # Prepare the propagated track queries, concat with the original dummy queries
-        if track_query_info is not None and 'track_query_hs_embeds' in track_query_info[0]:
+        # (2025-10-05) Added check for trans_track_query_boxes
+        # if track_query_info is not None and 'track_query_hs_embeds' in track_query_info[0]:
+        if (
+            track_query_info is not None and
+            'track_query_hs_embeds' in track_query_info[0] and
+            'trans_track_query_boxes' in track_query_info[0]
+        ):
             prev_hs_embed = torch.stack([t['track_query_hs_embeds'] for t in track_query_info])
             prev_boxes = torch.stack([t['trans_track_query_boxes'] for t in track_query_info])
             prev_boxes = rearrange(prev_boxes, 'b n (k c) -> b n k c', c=2)

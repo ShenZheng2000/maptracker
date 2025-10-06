@@ -45,10 +45,21 @@
 # PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r016_t050.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r032_t100.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
+# TODO: need to modify code, add pose noise in dataloader so both bev and vector memory will use, and TEST the results
 
 # V3
-# Stage 2 (No use_memory for vector)
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v3.py 8
+# Stage 2 (No vector memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v3.py 8
 
-# Stage 3 (No use_memory for vector)
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v3.py 8
+# Stage 3 (No vector memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v3.py 8 --resume-from work_dirs/stage3_v3/iter_20424.pth
+
+# V4
+# Stage 1 (No bev memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v4.py 8
+
+# # Stage 2 (No bev memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v4.py 8
+
+# # Stage 3 (No bev memory)
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v4.py 8

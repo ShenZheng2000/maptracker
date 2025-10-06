@@ -240,10 +240,13 @@ class BEVFormerEncoder(TransformerLayerSequence):
             
             # BEV memory fusion layer
             mem_layer = self.temporal_mem_layers[lid]
-            curr_feat = rearrange(output, 'b (h w) c -> b c h w', h=warped_history_bev.shape[3])
-            fused_output = mem_layer(warped_history_bev, curr_feat)
-            fused_output = rearrange(fused_output, 'b c h w -> b (h w) c')
-            output = output + fused_output
+
+            # (2025-10-05) Added check for warped_history_bev
+            if warped_history_bev is not None:
+                curr_feat = rearrange(output, 'b (h w) c -> b c h w', h=warped_history_bev.shape[3])
+                fused_output = mem_layer(warped_history_bev, curr_feat)
+                fused_output = rearrange(fused_output, 'b c h w -> b (h w) c')
+                output = output + fused_output
 
             bev_query = output
             if self.return_intermediate:
