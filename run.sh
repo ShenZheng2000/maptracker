@@ -29,10 +29,6 @@
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py 8
 
-# # Evaluation
-# bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
-# bash tools/dist_test.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
-
 # V2
 # # Stage 2 (NO pose noise for MapTracker or vector_memory)
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v2.py 8
@@ -45,21 +41,19 @@
 # PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r016_t050.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # PORT=29501 bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_r032_t100.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
-# TODO: need to modify code, add pose noise in dataloader so both bev and vector memory will use, and TEST the results
-
 # V3
 # Stage 2 (No vector memory)
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v3.py 8
 
 # Stage 3 (No vector memory)
-# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v3.py 8 --resume-from work_dirs/stage3_v3/iter_20424.pth
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v3.py 8
 
 # V4
-# Stage 1 (No bev memory)
+# Stage 1 (No bev memory) => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v4.py 8
 
-# # Stage 2 (No bev memory)
+# # Stage 2 (No bev memory) => TODO
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v4.py 8
 
-# # Stage 3 (No bev memory)
+# # Stage 3 (No bev memory) => TODO
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v4.py 8

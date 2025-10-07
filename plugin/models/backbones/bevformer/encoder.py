@@ -35,7 +35,7 @@ class BEVFormerEncoder(TransformerLayerSequence):
             `LN`.
     """
 
-    def __init__(self, *args, pc_range=None, num_points_in_pillar=4, return_intermediate=False, dataset_type='nuscenes',
+    def __init__(self, *args, pc_range=None, num_points_in_pillar=4, return_intermediate=False, dataset_type='nuscenes', history_steps=4,
                  **kwargs):
 
         super(BEVFormerEncoder, self).__init__(*args, **kwargs)
@@ -43,7 +43,12 @@ class BEVFormerEncoder(TransformerLayerSequence):
 
         temporal_mem_layers = []
         for _ in range(self.num_layers):
-            mem_conv = TemporalNet(history_steps=4, hidden_dims=self.embed_dims, num_blocks=1)
+
+            # (2025-10-06) Inherit history_steps from config, instead of hardcodeing it to 4
+            # mem_conv = TemporalNet(history_steps=4, hidden_dims=self.embed_dims, num_blocks=1)
+            self.history_steps = history_steps
+            mem_conv = TemporalNet(history_steps=self.history_steps, hidden_dims=self.embed_dims, num_blocks=1)
+
             temporal_mem_layers.append(mem_conv)
         self.temporal_mem_layers = nn.ModuleList(temporal_mem_layers)
 
@@ -241,8 +246,9 @@ class BEVFormerEncoder(TransformerLayerSequence):
             # BEV memory fusion layer
             mem_layer = self.temporal_mem_layers[lid]
 
+            # (2025-10-06) Added check for history_steps
             # (2025-10-05) Added check for warped_history_bev
-            if warped_history_bev is not None:
+            if warped_history_bev is not None and self.history_steps > 0:
                 curr_feat = rearrange(output, 'b (h w) c -> b c h w', h=warped_history_bev.shape[3])
                 fused_output = mem_layer(warped_history_bev, curr_feat)
                 fused_output = rearrange(fused_output, 'b c h w -> b (h w) c')
