@@ -2,6 +2,15 @@
 # bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # bash tools/dist_test.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 
+# Evaluation with mAP (with pose noise for all during testing) # TODO: change to 8 GPUs after debug
+bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_all_r008_t025.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_all_r004_t0125.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_test_noise_all_r002_t00625.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+
+
+# TODO: eval original make sure number are the same
+# TODO: try other test noise settings
+
 # Evaluation with C-mAP
 # exp_name=maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune
 # exp_name=stage3_v3

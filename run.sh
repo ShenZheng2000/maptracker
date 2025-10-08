@@ -52,8 +52,8 @@
 # Stage 1 (No bev memory) => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v4.py 8
 
-# # Stage 2 (No bev memory) => TODO
+# # Stage 2 (No bev memory) => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v4.py 8
 
 # # Stage 3 (No bev memory) => TODO
-# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v4.py 8
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v4.py 8

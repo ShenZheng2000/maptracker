@@ -9,7 +9,9 @@ from pyquaternion import Quaternion
 
 import pickle
 import os
-
+from ..models.mapers.utils import add_noise_to_pose
+from scipy.spatial.transform import Rotation as R
+import torch
 
 @DATASETS.register_module()
 class AV2Dataset(BaseMapDataset):
@@ -27,12 +29,16 @@ class AV2Dataset(BaseMapDataset):
         test_mode (bool): whether in test mode
     """
 
-    def __init__(self, **kwargs,):
+    def __init__(self, add_pose_noise_all=False, rot_std=0.08, trans_std=0.25, **kwargs):
         super().__init__(**kwargs)
         self.map_extractor = AV2MapExtractor(self.roi_size, self.id2map)
 
         self.renderer = Renderer(self.cat2id, self.roi_size, 'av2')
-    
+
+        self.add_pose_noise_all = add_pose_noise_all
+        self.rot_std = rot_std
+        self.trans_std = trans_std
+
     def load_annotations(self, ann_file):
         """Load annotations from ann_file.
 
@@ -118,8 +124,44 @@ class AV2Dataset(BaseMapDataset):
 
         sample = self.samples[idx]
         log_id = sample['log_id']
-        map_geoms = self.map_extractor.get_map_geom(log_id, sample['e2g_translation'], 
-                sample['e2g_rotation'])
+
+        # map_geoms = self.map_extractor.get_map_geom(log_id, sample['e2g_translation'], 
+        #         sample['e2g_rotation'])
+
+        # (2025-10-07) add noise only inside this branch
+        if self.add_pose_noise_all:
+            rot = R.from_matrix(sample['e2g_rotation'])
+            trans = torch.tensor(sample['e2g_translation'], dtype=torch.float32)
+
+            noisy_rot, noisy_trans = add_noise_to_pose(
+                rot, trans, rot_std=self.rot_std, trans_std=self.trans_std
+            )
+
+            # print debug info
+            # if idx < 5:
+            #     print(f"\n[POSE NOISE DEBUG] idx={idx} | scene={sample['scene_name']}")
+            #     print(f"  rot_std={self.rot_std:.3f}, trans_std={self.trans_std:.3f}")
+            #     print(f"  Original trans: {trans.tolist()}")
+            #     print(f"  Noisy trans: {noisy_trans.tolist()}")
+            #     print(f"  Δtrans: {(noisy_trans - trans).tolist()}")
+            #     orig_euler = rot.as_euler('zxy', degrees=True)
+            #     noisy_euler = noisy_rot.as_euler('zxy', degrees=True)
+            #     print(f"  Δrot (deg): {np.round((noisy_euler - orig_euler), 3).tolist()}")
+
+            # both extractor & model expect 3×3 rotation matrix
+            rot_mat = np.array(noisy_rot.as_matrix(), dtype=float)
+            map_geoms = self.map_extractor.get_map_geom(log_id, noisy_trans.numpy(), rot_mat)
+
+            used_trans = noisy_trans.numpy()
+            used_rot = rot_mat
+
+        else:
+            # ✅ untouched original path
+            map_geoms = self.map_extractor.get_map_geom(
+                log_id, sample['e2g_translation'], sample['e2g_rotation'])
+            used_trans = sample['e2g_translation']
+            used_rot = sample['e2g_rotation']
+
 
         map_label2geom = {}
         for k, v in map_geoms.items():
@@ -148,8 +190,14 @@ class AV2Dataset(BaseMapDataset):
             'cam_extrinsics': [c['extrinsics'] for c in sample['cams'].values()],
             'ego2img': ego2img_rts,
             'map_geoms': map_label2geom, # {0: List[ped_crossing(LineString)], 1: ...}
-            'ego2global_translation': sample['e2g_translation'], 
-            'ego2global_rotation': sample['e2g_rotation'].tolist(),
+
+            # 'ego2global_translation': sample['e2g_translation'],
+            # 'ego2global_rotation': sample['e2g_rotation'].tolist(), 
+            
+            # (2025-10-07) add noise only inside this branch
+            'ego2global_translation': used_trans,
+            'ego2global_rotation': used_rot.tolist(),
+
             'sample_idx': sample['modified_sample_idx'],
             'scene_name': sample['scene_name'],
             'lidar_path': sample['lidar_fpath']
