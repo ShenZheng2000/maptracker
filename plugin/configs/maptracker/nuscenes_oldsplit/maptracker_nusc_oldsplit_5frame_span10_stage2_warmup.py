@@ -2,6 +2,11 @@ _base_ = [
     '../../_base_/default_runtime.py'
 ]
 
+# overwrite PKL paths everywhere
+data_root = '/scratch/shenzhen/datasets/nuscenes'
+new_val_pkl = '/scratch/shenzhen/datasets/nuscenes/nuscenes_map_infos_val.pkl'
+new_train_pkl = '/scratch/shenzhen/datasets/nuscenes/nuscenes_map_infos_train.pkl'
+
 # model type
 type = 'Mapper'
 plugin = True
@@ -314,8 +319,10 @@ test_pipeline = [
 # DO NOT CHANGE
 eval_config = dict(
     type='NuscDataset',
-    data_root='./datasets/nuscenes',
-    ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+    # data_root='./datasets/nuscenes',
+    # ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+    data_root=data_root,
+    ann_file=new_val_pkl,
     meta=meta,
     roi_size=roi_size,
     cat2id=cat2id,
@@ -337,8 +344,10 @@ eval_config = dict(
 
 match_config = dict(
     type='NuscDataset',
-    data_root='./datasets/nuscenes',
-    ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+    # data_root='./datasets/nuscenes',
+    # ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+    data_root=data_root,
+    ann_file=new_val_pkl,
     meta=meta,
     roi_size=roi_size,
     cat2id=cat2id,
@@ -371,8 +380,10 @@ data = dict(
     workers_per_gpu=8,
     train=dict(
         type='NuscDataset',
-        data_root='./datasets/nuscenes',
-        ann_file='./datasets/nuscenes/nuscenes_map_infos_train.pkl',
+        # data_root='./datasets/nuscenes',
+        # ann_file='./datasets/nuscenes/nuscenes_map_infos_train.pkl',
+        data_root=data_root,
+        ann_file=new_train_pkl,
         meta=meta,
         roi_size=roi_size,
         cat2id=cat2id,
@@ -384,8 +395,10 @@ data = dict(
     ),
     val=dict(
         type='NuscDataset',
-        data_root='./datasets/nuscenes',
-        ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+        # data_root='./datasets/nuscenes',
+        # ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+        data_root=data_root,
+        ann_file=new_val_pkl,
         meta=meta,
         roi_size=roi_size,
         cat2id=cat2id,
@@ -396,8 +409,10 @@ data = dict(
     ),
     test=dict(
         type='NuscDataset',
-        data_root='./datasets/nuscenes',
-        ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+        # data_root='./datasets/nuscenes',
+        # ann_file='./datasets/nuscenes/nuscenes_map_infos_val.pkl',
+        data_root=data_root,
+        ann_file=new_val_pkl,
         meta=meta,
         roi_size=roi_size,
         cat2id=cat2id,
