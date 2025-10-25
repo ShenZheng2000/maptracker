@@ -45,12 +45,15 @@ class MapTracker(BaseMapper):
                  add_test_pose_noise=False,
                  rot_std=0.08,
                  trans_std=0.25,
+                 skip_prepare_track_queries=False,
                  **kwargs):
         super().__init__()
 
         self.add_pose_noise = add_pose_noise
         self.add_test_pose_noise = add_test_pose_noise
         self.noise_fn = lambda r, t: add_noise_to_pose(r, t, rot_std, trans_std)
+
+        self.skip_prepare_track_queries = skip_prepare_track_queries
 
         #Attribute
         self.model_name = model_name
@@ -477,15 +480,30 @@ class MapTracker(BaseMapper):
                     memory_bank = self.memory_bank if _use_memory else None
                 # 1). Compute the loss for prev frame
                 # 2). Get the matching results for computing the track query to next frame
-                loss_dict_prev, outputs_prev, prev_inds_list, prev_gt_inds_list, prev_matched_reg_cost, \
-                    prev_gt_list = self.head(
-                                        bev_features=bev_feats, 
-                                        img_metas=img_metas_prev, 
-                                        gts=gts_prev,
-                                        track_query_info=track_query_info,
-                                        memory_bank=memory_bank,
-                                        return_loss=True,
-                                        return_matching=True)
+                if not self.skip_prepare_track_queries:
+                    loss_dict_prev, outputs_prev, prev_inds_list, prev_gt_inds_list, prev_matched_reg_cost, \
+                        prev_gt_list = self.head(
+                                            bev_features=bev_feats, 
+                                            img_metas=img_metas_prev, 
+                                            gts=gts_prev,
+                                            track_query_info=track_query_info,
+                                            memory_bank=memory_bank,
+                                            return_loss=True,
+                                            return_matching=True
+                                            )
+                else:
+                    # (2025-10-23) # NO tracking → no matching → 5-return tuple
+                    outputs_prev, loss_dict_prev, _, _, _ = \
+                        self.head(
+                            bev_features=bev_feats, 
+                            img_metas=img_metas_prev,
+                            gts=gts_prev,
+                            track_query_info=None,
+                            memory_bank=None,
+                            return_loss=True,
+                            return_matching=False
+                        )
+
                 all_outputs_prev.append(outputs_prev)
 
                 if t > 0:
@@ -495,9 +513,14 @@ class MapTracker(BaseMapper):
                 # updated G.T. labels. The prepared queries will be passed to the model,
                 # and combind with the original queries inside the head model
                 pos_th = 0.4
-                track_query_info = self.prepare_track_queries_and_targets(gts_next, prev_inds_list, 
+
+                if not self.skip_prepare_track_queries:
+                    track_query_info = self.prepare_track_queries_and_targets(gts_next, prev_inds_list, 
                     prev_gt_inds_list, prev_matched_reg_cost, prev_gt_list, outputs_prev, gt_cur2prev, gt_prev2cur, 
                     img_metas_prev, _use_memory, pos_th=pos_th, timestep=t)
+                else:
+                    # (2025-10-21) Added option to skip the track query preparation
+                    track_query_info = None
             else:
                 loss_dict_prev = {}
 
