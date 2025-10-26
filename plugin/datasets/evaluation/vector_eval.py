@@ -44,10 +44,17 @@ class VectorEvaluate(object):
     @cached_property
     def gts(self) -> Dict[str, Dict[int, List[NDArray]]]:
         roi_size = self.dataset.roi_size
-        if 'av2' in self.dataset.ann_file:
+        
+        # (2025-10-25) add mapchange_geosplit and mapchange cache with higher priority
+        if 'mapchange_geosplit' in self.dataset.ann_file:
+            dataset = 'mapchange_geosplit'
+        elif 'mapchange' in self.dataset.ann_file:
+            dataset = 'mapchange'
+        elif 'av2' in self.dataset.ann_file:
             dataset = 'av2'
         else:
             dataset = 'nusc'
+
         if self.new_split:
             tmp_file = f'./tmp_gts_{dataset}_{roi_size[0]}x{roi_size[1]}_newsplit.pkl'
         else:

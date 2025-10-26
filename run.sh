@@ -8,33 +8,38 @@
 # ln -s /ssd0/shenzhen/NuScenes/nuscenes ./datasets/nuscenes
 
 # # Step2: Generate annotation files for Argoverse2 dataset., BUT based on CVPR'24 geosplit
-# python tools/data_converter/argoverse_converter.py --data-root ./datasets/argoverse2_geosplit
+# python tools/data_converter/argoverse_converter.py --data-root /scratch/shenzhen/datasets/argoverse2_geosplit
 # python tools/data_converter/argoverse_converter.py --data-root /scratch/shenzhen/datasets/mapchange_geosplit
+# python tools/data_converter/argoverse_converter.py --data-root /scratch/shenzhen/datasets/mapchange
 
 # # NOTE:  geosplit file will be in original folder with original name (i.e. overwrites)
 # python tools/data_converter/nuscenes_converter.py --data-root ./datasets/nuscenes --geosplit
 
-# # Step3: Generate the tracking ground truth by
-# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/argoverse2_geosplit --visualize
-# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/nuscenes --visualize
-# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/mapchange_geosplit --visualize
+# # Step3: Generate the tracking ground truth (NOTE: remove --visualize to save time)
+# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/argoverse2_geosplit
+# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/nuscenes
+# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/mapchange
+# python tools/tracking/prepare_gt_tracks.py plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage3_joint_finetune.py  --out-dir tracking_gts/mapchange_geosplit
 
 # # Training
 # # Stage 1: BEV pretraining with semantic segmentation losses:
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage1_bev_pretrain.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage1_bev_pretrain.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage1_bev_pretrain.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_5frame_span10_stage1_bev_pretrain.py 8
 
 
 # # Stage 2: Vector module warmup with a large batch size while freezing the BEV module:
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage2_warmup.py 8
-# bash ./tools/dist_train.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage2_warmup.py 8
-# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage2_warmup.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage2_warmup.py 8'
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage2_warmup.py 8 
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_5frame_span10_stage2_warmup.py 8
 
 # # Stage 3: Joint finetuning:
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5fr5ame_span10_stage3_joint_finetune.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_geosplit_5frame_span10_stage3_joint_finetune.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/maptracker_mapchange_5frame_span10_stage3_joint_finetune.py 8
 
 
 # V2
@@ -85,3 +90,8 @@
 # V7
 # Stage 3 ONLY, original bs => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v7.py 8
+
+# V8
+# skip_prepare_track_queries => DONE
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v8.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v8.py 8
