@@ -655,7 +655,10 @@ class MapTracker(BaseMapper):
         # Neck
         bev_feats = self.neck(_bev_feats)
 
-        if self.skip_vector_head or first_frame:
+        # (2025-10-27) disable test-time tracking when skip_prepare_track_queries=True 
+        #    => stop FEEDING (using) previous-frame track queries
+        # if self.skip_vector_head or first_frame:
+        if self.skip_vector_head or first_frame or self.skip_prepare_track_queries:
             self.temporal_propagate(bev_feats, img_metas, all_history_curr2prev, \
                     all_history_prev2curr, self.use_memory, track_query_info=None)
             seg_preds, seg_feats = self.seg_decoder(bev_features=bev_feats, return_loss=False)
@@ -691,17 +694,35 @@ class MapTracker(BaseMapper):
             self.history_bev_feats_all.pop(0)
             self.history_img_metas_all.pop(0)
         
-        if not self.skip_vector_head:
+        # (2025-10-27) disable test-time tracking propagation when skip_prepare_track_queries=True
+        #    => stop UPDATING / PROPAGATING tracks into the next frame
+        # if not self.skip_vector_head:
+        if not self.skip_vector_head and not self.skip_prepare_track_queries:
             memory_bank = self.memory_bank if self.use_memory else None
             thr_det = 0.4 if first_frame else 0.6
             pos_results = self.head.prepare_temporal_propagation(preds_dict, scene_name, local_idx, 
                                         memory_bank, thr_track=0.5, thr_det=thr_det)
-    
+
+        # (2025-10-27) skip post_process tracking when skip_prepare_track_queries=True
+        #    => stop ATTACHING / PRESENTING tracking results in output
         if not self.skip_vector_head:
             results_list = self.head.post_process(preds_dict, tokens, track_dict)
-            results_list[0]['pos_results'] = pos_results
             results_list[0]['meta'] = img_metas[0]
-        else:
+
+            if not self.skip_prepare_track_queries:
+                results_list[0]['pos_results'] = pos_results
+            else:
+                results_list[0]['pos_results'] = {
+                    'vectors': [],
+                    'labels': [],
+                    'scores': [],
+                    'scene_name': scene_name,
+                    'local_idx': local_idx,
+                    'global_ids': [],
+                    'meta': img_metas[0],
+                }
+                                
+        else: # this will never happen in stage2/3
             results_list = [{'vectors': [],
                 'scores': [],
                 'labels': [],
