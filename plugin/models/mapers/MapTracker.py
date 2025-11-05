@@ -46,6 +46,8 @@ class MapTracker(BaseMapper):
                  rot_std=0.08,
                  trans_std=0.25,
                  skip_prepare_track_queries=False,
+                 disable_seg_loss=False,
+                 disable_seg_dice_loss=False,
                  **kwargs):
         super().__init__()
 
@@ -54,6 +56,9 @@ class MapTracker(BaseMapper):
         self.noise_fn = lambda r, t: add_noise_to_pose(r, t, rot_std, trans_std)
 
         self.skip_prepare_track_queries = skip_prepare_track_queries
+
+        self.disable_seg_loss = disable_seg_loss
+        self.disable_seg_dice_loss = disable_seg_dice_loss
 
         #Attribute
         self.model_name = model_name
@@ -524,8 +529,9 @@ class MapTracker(BaseMapper):
             else:
                 loss_dict_prev = {}
 
-            loss_dict_prev['seg'] = seg_loss
-            loss_dict_prev['seg_dice'] = seg_dice_loss
+            # (2025-10-30) Add option to disable seg loss and dice loss
+            loss_dict_prev['seg'] = seg_loss if not self.disable_seg_loss else torch.tensor(0.0, device=seg_loss.device, requires_grad=True)
+            loss_dict_prev['seg_dice'] = seg_dice_loss if not self.disable_seg_dice_loss else torch.tensor(0.0, device=seg_dice_loss.device, requires_grad=True)
 
             all_loss_dict_prev.append(loss_dict_prev)
 
@@ -579,8 +585,9 @@ class MapTracker(BaseMapper):
         else:
             loss_dict = {}
         
-        loss_dict['seg'] = seg_loss
-        loss_dict['seg_dice'] = seg_dice_loss
+        # (2025-10-30) Add option to disable seg loss and dice loss
+        loss_dict['seg'] = seg_loss if not self.disable_seg_loss else torch.tensor(0.0, device=seg_loss.device, requires_grad=True)
+        loss_dict['seg_dice'] = seg_dice_loss if not self.disable_seg_dice_loss else torch.tensor(0.0, device=seg_dice_loss.device, requires_grad=True)
 
         # format loss, average over all frames (2 frames for now)
         loss = 0

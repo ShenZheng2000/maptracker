@@ -96,3 +96,9 @@
 # skip_prepare_track_queries => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v8.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v8.py 8
+
+# V8
+# Disable seg loss and dice loss (TODO: fixing error!)
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v9.py 8
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v9.py 8
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v9.py 8
