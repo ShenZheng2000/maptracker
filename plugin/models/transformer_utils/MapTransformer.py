@@ -300,6 +300,14 @@ class MapTransformerLayer(BaseTransformerLayer):
                         key_padding_mask=key_padding_mask,
                         **kwargs)
                     attn_index += 1
+
+                    # >>> (2025-12-4): fix: update query here if only one cross_attn (original code hardcode assumes two)
+                    if self.operation_order.count('cross_attn') == 1:
+                        # print(">>> MapTransformerLayer: only one cross_attn, update query here.")
+                        query = query_bev
+                        identity = query
+                    # <<< END INSERT >>>
+
                 else:
                     # Memory cross attention
                     assert attn_index == 2

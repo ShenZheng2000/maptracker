@@ -10,7 +10,7 @@
 
 
 # Evaluation with C-mAP (TODO: debug this part. what went wrong?)
-exp_name=maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune
+# exp_name=maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune
 # exp_name=stage3_v3
 # exp_name=stage3_v2
 # exp_name=stage3_v4
@@ -20,6 +20,8 @@ exp_name=maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune
 # exp_name=stage3_v7
 # exp_name=stage3_v8
 # exp_name=stage3_v9
+# exp_name=stage3_v10
+exp_name=stage3_v11
 CUDA_VISIBLE_DEVICES=1 python tools/tracking/prepare_pred_tracks.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/submission_vector.json
 CUDA_VISIBLE_DEVICES=1 python tools/tracking/calculate_cmap.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/pos_predictions_5.pkl
 

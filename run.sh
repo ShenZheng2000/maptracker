@@ -97,8 +97,23 @@
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v8.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v8.py 8
 
-# V8
-# Disable seg loss and dice loss (TODO: fixing error!)
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v9.py 8
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v9.py 8
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v9.py 8
+# V9
+# Disable seg loss and dice loss
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v9.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v9.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v9.py 8
+
+# V10
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v10.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v10.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v10.py 8
+
+# V11
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v11.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v11.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v11.py 8
+
+# V12 (TODO: pause these experiments for now, and think about other changes)
+bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v12.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v12.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v12.py 8
