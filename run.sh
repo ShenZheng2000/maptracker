@@ -92,6 +92,10 @@
 # Stage 3 ONLY, original bs => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v7.py 8
 
+# V7_nostage2
+# Stage 3 ONLY, original bs => DONE
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v7_nostage2.py 8
+
 # V8
 # skip_prepare_track_queries => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v8.py 8
@@ -113,7 +117,21 @@
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v11.py 8
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v11.py 8
 
-# V12 (TODO: pause these experiments for now, and think about other changes)
-bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v12.py 8
-# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v12.py 8
-# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v12.py 8
+# V11_noseg
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v11_noseg.py 8
+
+# v11_noseg_nostage1_nostage2
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v11_noseg_nostage1_nostage2.py
+
+# v11_noseg_nostage2
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v11_noseg_nostage2.py 8
+
+# V13
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v13.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v13.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v13.py 8
+
+# V14
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage1_v14.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v14.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v14.py 8

@@ -64,6 +64,8 @@ class BEVFormerBackbone(nn.Module):
                  upsample=False,
                  up_outdim=128,
                  history_steps=None,
+                 disable_prop_bev_feat=False,
+                 disable_warped_history_fusion=False,
                  **kwargs):
         super(BEVFormerBackbone, self).__init__()
 
@@ -99,6 +101,9 @@ class BEVFormerBackbone(nn.Module):
             self.up = UpsampleBlock(self.transformer.embed_dims, up_outdim)
         
         self.history_steps = history_steps
+
+        self.disable_prop_bev_feat = disable_prop_bev_feat
+        self.disable_warped_history_fusion = disable_warped_history_fusion
 
         self._init_layers()
         self.init_weights()
@@ -218,14 +223,48 @@ class BEVFormerBackbone(nn.Module):
                 grid_length=(self.real_h / self.bev_h,
                             self.real_w / self.bev_w),
                 bev_pos=bev_pos,
-                prop_bev=prop_bev_feat,
+                # prop_bev=prop_bev_feat,
                 img_metas=img_metas,
                 prev_bev=prev_bev,
-                warped_history_bev=all_warped_history_feat,
+                # warped_history_bev=all_warped_history_feat,
+                # (2025-12-27) disable prop_bev (bev prior NO, bev fusion YES), or warped_history_bev (bev prior YES, bev fusion NO)
+                prop_bev = None if self.disable_prop_bev_feat else prop_bev_feat,
+                warped_history_bev = None if self.disable_warped_history_fusion else all_warped_history_feat,
             )
         
         outs = outs.unflatten(1,(self.bev_h,self.bev_w)).permute(0,3,1,2).contiguous()
         
+
+        # # TODO: remove these lines after debug is DONE! 
+        # # ---- debug: raw current BEV (no history) ----
+        # cur_bev_raw = self.transformer.get_bev_features(
+        #     mlvl_feats,
+        #     bev_queries,
+        #     self.bev_h,
+        #     self.bev_w,
+        #     grid_length=(self.real_h / self.bev_h,
+        #                 self.real_w / self.bev_w),
+        #     bev_pos=bev_pos,
+        #     img_metas=img_metas,
+        #     prev_bev=None,
+        #     prop_bev=None,
+        #     warped_history_bev=None,
+        # )
+        # cur_bev_raw = cur_bev_raw.unflatten(1,(self.bev_h,self.bev_w)).permute(0,3,1,2).contiguous()
+
+        # # ---- debug: warped history BEV ----
+        # if all_warped_history_feat is not None:
+        #     hist_bev = all_warped_history_feat[:, -1]   # [B,C,H,W]
+        #     sim = F.cosine_similarity(
+        #         cur_bev_raw.flatten(1),
+        #         hist_bev.flatten(1),
+        #         dim=1
+        #     ).mean()
+        #     print("BEV cosine(cur vs hist) =", sim.item())
+
+
+
+
         if self.upsample:
             outs = self.up(outs)
         
