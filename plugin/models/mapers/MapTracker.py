@@ -486,13 +486,13 @@ class MapTracker(BaseMapper):
                     self.process_history_info(all_img_metas_prev[t], history_img_metas)
 
             # ================ define local_map
-            # local_map = self.get_local_map(all_img_metas_prev[t], all_img_prev[t][0].device, status='train')
-            local_map = None # TODO: THINK! should we use local_map for all prev frames?
+            local_map = self.get_local_map(all_img_metas_prev[t], all_img_prev[t][0].device, status='train')
+            # local_map = None # TODO: THINK! should we use local_map for all prev frames?
 
             _bev_feats, mlvl_feats = self.backbone(all_img_prev[t], all_img_metas_prev[t], t, history_bev_feats, 
                         history_img_metas, all_history_coord, points=None, 
                         img_backbone_gradient=img_backbone_gradient,
-                        local_mapc=local_map)
+                        local_map=local_map)
 
             # Neck for prev
             bev_feats = self.neck(_bev_feats)
