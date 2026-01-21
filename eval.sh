@@ -1,5 +1,5 @@
 # # Evaluation with mAP
-# bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
+bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_argoverse2_geosplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # bash tools/dist_test.sh plugin/configs/maptracker/nuscenes_oldsplit/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune.py work_dirs/maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune/latest.pth 8 --eval --eval-options save_semantic=True
 # bash tools/dist_test.sh plugin/configs/maptracker/av2_oldsplit/stage3_v9.py work_dirs/stage3_v9/latest.pth 8 --eval --eval-options save_semantic=True
 
@@ -27,9 +27,9 @@
 # exp_name=stage3_v11_noseg_nostage1_nostage2
 # exp_name=stage3_v11_noseg_nostage2
 # exp_name=stage3_v13
-exp_name=stage3_v14
-CUDA_VISIBLE_DEVICES=1 python tools/tracking/prepare_pred_tracks.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/submission_vector.json
-CUDA_VISIBLE_DEVICES=1 python tools/tracking/calculate_cmap.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/pos_predictions_5.pkl
+# exp_name=stage3_v14
+# CUDA_VISIBLE_DEVICES=1 python tools/tracking/prepare_pred_tracks.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/submission_vector.json
+# CUDA_VISIBLE_DEVICES=1 python tools/tracking/calculate_cmap.py plugin/configs/maptracker/av2_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/pos_predictions_5.pkl
 
 # exp_name=maptracker_nusc_oldsplit_5frame_span10_stage3_joint_finetune
 # python tools/tracking/prepare_pred_tracks.py plugin/configs/maptracker/nuscenes_oldsplit/${exp_name}.py --result_path ./work_dirs/${exp_name}/submission_vector.json

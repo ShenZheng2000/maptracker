@@ -96,6 +96,11 @@
 # Stage 3 ONLY, original bs => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v7_nostage2.py 8
 
+# V7_nostage1
+# Stage 3 ONLY, original bs => TODO: train this and see what happens!
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v7_nostage1.py 8
+# bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage3_v7_nostage1.py 8
+
 # V8
 # skip_prepare_track_queries => DONE
 # bash ./tools/dist_train.sh plugin/configs/maptracker/av2_oldsplit/stage2_v8.py 8

@@ -125,6 +125,14 @@ class PerceptionTransformer(BaseModule):
         # Fuse the propagated bev features from the prev step
         if prop_bev is not None:
             prop_bev = rearrange(prop_bev, 'b c h w -> (h w) b c')
+            
+            # # NOTE: insert some code for debug
+            # s = prop_bev.sum(-1)
+            # print("min max mean:", s.min().item(), s.max().item(), s.mean().item())
+            # for i in [0, 10, 100, 500, 1000]:
+            #     print(f"cell {i} sum =", s[i, 0].item())
+            # exit()         
+            
             valid_mask = (prop_bev.sum(-1) > 0).to(bev_queries.dtype)[..., None]
             bev_queries = bev_queries * (1 - valid_mask) + prop_bev * valid_mask 
         
