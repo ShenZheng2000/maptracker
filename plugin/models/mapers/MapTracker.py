@@ -28,7 +28,7 @@ global_map_cfg = dict(
     bev_w=100,
 
     # TODO: hardcode for now, move to config later. 
-    pose_root='./datasets/argoverse2_geosplit',
+    pose_root='/scratch/shenzhen/datasets/argoverse2_geosplit',
 
     fuse_method='prob',  # all or prob
     raster_size=[0.30, 0.30],
@@ -486,7 +486,7 @@ class MapTracker(BaseMapper):
                     self.process_history_info(all_img_metas_prev[t], history_img_metas)
 
             # ================ define local_map
-            local_map = self.get_local_map(all_img_metas_prev[t], all_img_prev[t][0].device, status='train')
+            # local_map = self.get_local_map(all_img_metas_prev[t], all_img_prev[t][0].device, status='train')
             # local_map = None # TODO: THINK! should we use local_map for all prev frames?
 
             _bev_feats, mlvl_feats = self.backbone(all_img_prev[t], all_img_metas_prev[t], t, history_bev_feats, 

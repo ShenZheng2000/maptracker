@@ -129,7 +129,7 @@ class AV2Dataset(BaseMapDataset):
         lidar2global[:3, :3] = sample['e2g_rotation']
 
         # ================ pre-save lidar2global before shift
-        lidar2global_real = lidar2global
+        lidar2global_real = lidar2global.copy()
 
 
         log_id = sample['log_id']
